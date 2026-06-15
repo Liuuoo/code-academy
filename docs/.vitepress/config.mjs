@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 import mathjax3 from 'markdown-it-mathjax3'
-import { sidebarNotes, sidebarSolutions, sidebarLiteracy, sidebarResearch } from './sidebar.mjs'
+import { sidebar, catalog } from './sidebar.mjs'
 
 export default defineConfig({
   lang: 'zh-CN',
@@ -31,12 +31,8 @@ export default defineConfig({
       { text: '信息素养', link: '/literacy/' },
       { text: '研究随笔', link: '/research/' },
     ],
-    sidebar: {
-      '/notes/': sidebarNotes,
-      '/solutions/': sidebarSolutions,
-      '/literacy/': sidebarLiteracy,
-      '/research/': sidebarResearch,
-    },
+    sidebar,
+    catalog,
     search: {
       provider: 'local',
       options: {
