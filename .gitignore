@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# vitepress build output & cache
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
+# system
+.DS_Store
+*.log
+
+# env / secrets
+.env
+.env.*
+!.env.example

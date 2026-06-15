@@ -1,0 +1,20 @@
+{
+  "name": "code-academy",
+  "version": "1.0.0",
+  "description": "教学笔记与题解站点",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vitepress dev docs",
+    "build": "vitepress build docs",
+    "preview": "vitepress preview docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "markdown-it-mathjax3": "^4.3.2",
+    "vitepress": "^1.6.4",
+    "vue": "^3.5.38"
+  }
+}

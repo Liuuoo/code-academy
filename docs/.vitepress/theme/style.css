@@ -1,0 +1,164 @@
+/* ============================================================
+   Code Academy — 自定义主题
+   设计取向：克制、专业、可读。中性底色 + 单一沉稳点缀色。
+   重排版（字体/行距/留白），轻装饰。
+   ============================================================ */
+
+:root {
+  /* 点缀色：沉稳靛蓝，非高饱和渐变 */
+  --vp-c-brand-1: #3a5a8c;
+  --vp-c-brand-2: #45689e;
+  --vp-c-brand-3: #5878ab;
+  --vp-c-brand-soft: rgba(58, 90, 140, 0.12);
+
+  /* 中性底色偏暖，减少纯白的廉价感 */
+  --vp-c-bg: #fbfaf8;
+  --vp-c-bg-alt: #f4f2ee;
+  --vp-c-bg-soft: #f7f5f1;
+
+  /* 字体：正文用系统中文 + 衬线感更弱的无衬线；代码用等宽 */
+  --vp-font-family-base: -apple-system, BlinkMacSystemFont, 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Source Han Sans SC', 'Noto Sans CJK SC',
+    'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo,
+    Consolas, 'Liberation Mono', monospace;
+
+  /* 内容最大宽度收窄一点，长文更易读 */
+  --vp-layout-max-width: 1440px;
+}
+
+.dark {
+  --vp-c-brand-1: #8aa6cf;
+  --vp-c-brand-2: #7896c2;
+  --vp-c-brand-3: #6b8bb8;
+  --vp-c-brand-soft: rgba(138, 166, 207, 0.16);
+
+  --vp-c-bg: #1a1b1e;
+  --vp-c-bg-alt: #141518;
+  --vp-c-bg-soft: #202125;
+}
+
+/* 正文排版：行距宽松，适合长篇笔记阅读 */
+.vp-doc {
+  line-height: 1.75;
+}
+.vp-doc p,
+.vp-doc li {
+  letter-spacing: 0.01em;
+}
+
+/* 标题：层级清晰，不过度加粗 */
+.vp-doc h1 {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.vp-doc h2 {
+  font-weight: 600;
+  margin-top: 2.4rem;
+  padding-top: 1.6rem;
+}
+.vp-doc h3 {
+  font-weight: 600;
+  margin-top: 1.8rem;
+}
+
+/* ============================================================
+   内嵌资源：PDF / HTML 演示 / 视频 自适应容器
+   用法见下方 .embed-frame 包裹
+   ============================================================ */
+.embed-frame {
+  position: relative;
+  width: 100%;
+  margin: 1.5rem 0;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--vp-c-bg-soft);
+}
+.embed-frame iframe {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+/* PDF 用固定较高比例，桌面舒适 */
+.embed-frame.pdf iframe {
+  height: 80vh;
+  min-height: 480px;
+}
+/* 16:9 视频/演示用宽高比，自动随宽度缩放 */
+.embed-frame.ratio-16-9 {
+  aspect-ratio: 16 / 9;
+}
+.embed-frame.ratio-16-9 iframe {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+/* ============================================================
+   移动端阅读适配（重点）
+   ============================================================ */
+@media (max-width: 768px) {
+  /* 正文字号略增、行距维持，触摸阅读更舒适 */
+  .vp-doc {
+    font-size: 16px;
+    line-height: 1.7;
+  }
+  .vp-doc h1 { font-size: 1.7rem; line-height: 1.3; }
+  .vp-doc h2 { font-size: 1.35rem; margin-top: 1.8rem; padding-top: 1.2rem; }
+  .vp-doc h3 { font-size: 1.15rem; }
+
+  /* 代码块：横向滚动而非换行撑破布局，保留惯性滚动 */
+  .vp-doc div[class*='language-'] {
+    border-radius: 6px;
+    margin: 1rem -1.2rem; /* 贴边，争取宽度 */
+    border-radius: 0;
+  }
+  .vp-doc div[class*='language-'] pre {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* 行号在窄屏占地，移动端隐藏 */
+  .vp-doc [class*='language-'] .line-numbers-wrapper {
+    display: none;
+  }
+  .vp-doc [class*='language-'].line-numbers-mode .line-numbers-wrapper {
+    display: none;
+  }
+
+  /* 表格：包一层横向滚动，避免撑破 */
+  .vp-doc table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  /* 数学公式：块级公式横向滚动，不溢出 */
+  .vp-doc mjx-container[display='true'] {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  /* PDF 在手机上固定高度更友好 */
+  .embed-frame.pdf iframe {
+    height: 70vh;
+    min-height: 360px;
+  }
+
+  /* 图片不溢出 */
+  .vp-doc img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* 超窄屏进一步收紧 */
+@media (max-width: 420px) {
+  .vp-doc {
+    font-size: 15.5px;
+  }
+}
