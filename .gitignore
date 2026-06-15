@@ -13,3 +13,4 @@ docs/.vitepress/cache/
 .env
 .env.*
 !.env.example
+背景图候选/

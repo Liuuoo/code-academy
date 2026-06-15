@@ -115,11 +115,11 @@
   .vp-doc h2 { font-size: 1.35rem; margin-top: 1.8rem; padding-top: 1.2rem; }
   .vp-doc h3 { font-size: 1.15rem; }
 
-  /* 代码块：横向滚动而非换行撑破布局，保留惯性滚动 */
+  /* 代码块：留在正文宽度内，内部横向滚动，不用负 margin 以免撑破视口 */
   .vp-doc div[class*='language-'] {
     border-radius: 6px;
-    margin: 1rem -1.2rem; /* 贴边，争取宽度 */
-    border-radius: 0;
+    margin: 1rem 0;
+    max-width: 100%;
   }
   .vp-doc div[class*='language-'] pre {
     overflow-x: auto;
@@ -169,3 +169,62 @@
     font-size: 15.5px;
   }
 }
+
+/* ============================================================
+   顶部水彩背景装饰层
+   固定在视口顶部、横向撑满、按比例缩放不变形、向下渐隐。
+   置于内容下层，降低不透明度保证阅读。
+   ============================================================ */
+.Layout::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 420px;
+  background-image: url('/bg/wash.jpg');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto; /* 宽度撑满，高度按比例，不拉伸变形 */
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+  /* 底部渐隐，与站点底色无缝过渡 */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 100%);
+}
+
+/* 暗色模式下水彩太亮，压暗并降透明度 */
+.dark .Layout::before {
+  opacity: 0.22;
+}
+
+/* 确保导航栏、内容在背景之上 */
+.VPNav,
+.VPContent,
+.VPSidebar,
+.VPLocalNav {
+  position: relative;
+  z-index: 1;
+}
+/* 导航栏半透明，让顶部水彩透出来一点，更融合 */
+.VPNavBar {
+  background-color: transparent !important;
+}
+.VPNavBar.has-sidebar .content,
+.VPNavBar:not(.home) {
+  backdrop-filter: saturate(150%) blur(8px);
+}
+
+/* 移动端：正方形图在窄屏顶部彩带会偏高，缩短高度、改用覆盖式定位避免左右留白 */
+@media (max-width: 768px) {
+  .Layout::before {
+    height: 260px;
+    background-size: cover; /* 窄屏改为覆盖，取顶部彩带主体 */
+    background-position: top center;
+    opacity: 0.42;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 100%);
+  }
+}
+

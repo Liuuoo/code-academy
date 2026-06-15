@@ -8,11 +8,54 @@ const library = computed(() => theme.value.library || [])
 function tagClass(t) {
   return `lib-tag lib-tag--${t || 'default'}`
 }
-function cards(section) {
-  return section.groups.filter((n) => n.type === 'group')
+
+// 把一个板块的目录树展开成「卡片」列表。
+// 规则：一个分组若其直接子节点里含子分组(子文件夹)，则把每个子分组各自展开成一张独立卡片，
+// 卡片标题带上父系列名（如 GESP · 二级）；否则该分组自身就是一张卡片。
+function cardsOf(section) {
+  const out = []
+  const groups = section.groups.filter((n) => n.type === 'group')
+  const looseDocs = section.groups.filter((n) => n.type === 'doc')
+
+  for (const g of groups) {
+    const subGroups = (g.items || []).filter((n) => n.type === 'group')
+    const directDocs = (g.items || []).filter((n) => n.type === 'doc')
+
+    if (subGroups.length) {
+      // 该系列直接挂的文章（少见）单独成一张卡
+      if (directDocs.length) {
+        out.push({ title: g.text, tag: g.tag, tagType: g.tagType, description: g.description, docs: directDocs })
+      }
+      // 每个子分类独立成卡
+      for (const sg of subGroups) {
+        out.push({
+          title: `${g.text} · ${sg.text}`,
+          tag: sg.tag || g.tag,
+          tagType: sg.tagType || g.tagType,
+          description: sg.description || '',
+          docs: flattenDocs(sg),
+        })
+      }
+    } else {
+      // 无子分类，系列本身一张卡
+      out.push({ title: g.text, tag: g.tag, tagType: g.tagType, description: g.description, docs: directDocs })
+    }
+  }
+
+  if (looseDocs.length) {
+    out.push({ title: '未分类', docs: looseDocs })
+  }
+  return out
 }
-function loose(section) {
-  return section.groups.filter((n) => n.type === 'doc')
+
+// 把一个节点下所有层级的文章拉平（用于卡内列出）
+function flattenDocs(node) {
+  const out = []
+  for (const it of node.items || []) {
+    if (it.type === 'doc') out.push(it)
+    else if (it.type === 'group') out.push(...flattenDocs(it))
+  }
+  return out
 }
 </script>
 
@@ -40,40 +83,19 @@ function loose(section) {
         <p class="lib-section__desc">{{ sec.desc }}</p>
 
         <div class="lib-cards">
-          <div v-for="g in cards(sec)" :key="g.text" class="lib-card">
+          <div v-for="c in cardsOf(sec)" :key="c.title" class="lib-card">
             <div class="lib-card__head">
-              <span class="lib-card__title">{{ g.text }}</span>
-              <span v-if="g.tag" :class="tagClass(g.tagType)">{{ g.tag }}</span>
+              <span class="lib-card__title">{{ c.title }}</span>
+              <span v-if="c.tag" :class="tagClass(c.tagType)">{{ c.tag }}</span>
             </div>
-            <div v-if="g.description" class="lib-card__desc">{{ g.description }}</div>
+            <div v-if="c.description" class="lib-card__desc">{{ c.description }}</div>
             <div class="lib-card__list">
-              <template v-for="it in g.items" :key="it.link || it.text">
-                <!-- 子分类：小标题分段 + 段内文章 -->
-                <div v-if="it.type === 'group'" class="lib-card__seg">
-                  <div class="lib-card__seg-title">{{ it.text }}</div>
-                  <template v-for="sub in it.items" :key="sub.link || sub.text">
-                    <a v-if="sub.link" :href="withBase(sub.link)" class="lib-card__item">{{ sub.text }}</a>
-                    <div v-else class="lib-card__seg lib-card__seg--nested">
-                      <div class="lib-card__seg-title lib-card__seg-title--sub">{{ sub.text }}</div>
-                      <a v-for="leaf in sub.items" :key="leaf.link" :href="withBase(leaf.link)" class="lib-card__item">{{ leaf.text }}</a>
-                    </div>
-                  </template>
-                </div>
-                <!-- 直接文章 -->
-                <a v-else :href="withBase(it.link)" class="lib-card__item">{{ it.text }}</a>
-              </template>
-            </div>
-          </div>
-
-          <div v-if="loose(sec).length" class="lib-card">
-            <div class="lib-card__head"><span class="lib-card__title">未分类</span></div>
-            <div class="lib-card__list">
-              <a v-for="d in loose(sec)" :key="d.link" :href="withBase(d.link)" class="lib-card__item">{{ d.text }}</a>
+              <a v-for="d in c.docs" :key="d.link" :href="withBase(d.link)" class="lib-card__item">{{ d.text }}</a>
             </div>
           </div>
         </div>
 
-        <p v-if="!cards(sec).length && !loose(sec).length" class="lib-empty">这个板块还没有内容。</p>
+        <p v-if="!cardsOf(sec).length" class="lib-empty">这个板块还没有内容。</p>
       </section>
     </div>
   </div>
@@ -169,13 +191,24 @@ function loose(section) {
   flex-direction: column;
   max-height: 11rem;
   overflow-y: auto;
+  /* 滚动条靠右贴边，内容与条之间留点空隙 */
+  padding-right: 4px;
+  /* Firefox：默认隐藏（thumb 透明），hover 时显形 */
   scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s ease;
 }
-.lib-card__list::-webkit-scrollbar { width: 6px; }
+.lib-card__list::-webkit-scrollbar { width: 5px; }
+.lib-card__list::-webkit-scrollbar-track { background: transparent; }
 .lib-card__list::-webkit-scrollbar-thumb {
-  background: var(--vp-c-divider);
+  background: transparent; /* 默认隐藏 */
   border-radius: 3px;
+  transition: background 0.3s ease;
 }
+/* 鼠标移到卡片上才显示滚动条 */
+.lib-card:hover .lib-card__list { scrollbar-color: var(--vp-c-divider) transparent; }
+.lib-card:hover .lib-card__list::-webkit-scrollbar-thumb { background: var(--vp-c-divider); }
+.lib-card__list:hover::-webkit-scrollbar-thumb { background: var(--ca-accent); }
 .lib-card__item {
   font-size: 0.86rem;
   padding: 0.3rem 0;
@@ -187,28 +220,7 @@ function loose(section) {
   transition: color 0.15s ease;
 }
 .lib-card__item:hover { color: var(--ca-accent); }
-.lib-card__subgroup { font-size: 0.76rem; color: var(--vp-c-text-3); font-weight: 600; margin-top: 0.4rem; }
 .lib-empty { color: var(--vp-c-text-2); }
-
-/* 卡内子分类分段 */
-.lib-card__seg { margin-top: 0.5rem; }
-.lib-card__seg-title {
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--vp-c-text-3);
-  letter-spacing: 0.02em;
-  padding: 0.2rem 0;
-  border-bottom: 1px solid var(--vp-c-divider);
-  margin-bottom: 0.2rem;
-}
-.lib-card__seg-title--sub {
-  border-bottom: none;
-  padding-left: 0.6rem;
-  color: var(--vp-c-text-3);
-  font-weight: 500;
-}
-.lib-card__seg--nested { margin-left: 0.4rem; }
-.lib-card__seg--nested .lib-card__item { padding-left: 0.6rem; }
 
 .lib-tag { font-size: 0.7rem; padding: 0.05rem 0.45rem; border-radius: 4px; font-weight: 600; line-height: 1.5; }
 .lib-tag--default { color: var(--vp-c-text-2); background: var(--vp-c-default-soft); }
@@ -237,6 +249,13 @@ function loose(section) {
   .lib-cards { gap: 0.8rem; }
   .lib-card { flex: 1 1 100%; width: 100%; }
   .lib-card__list { max-height: none; }
+  /* 占满整行后标题应换行完整显示，而非省略号截断 */
+  .lib-card__item {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    padding: 0.45rem 0;
+  }
 }
 </style>
 
