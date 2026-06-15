@@ -1,12 +1,12 @@
 import DefaultTheme from 'vitepress/theme'
-import CategoryIndex from './CategoryIndex.vue'
-import LibraryView from './LibraryView.vue'
+import SectionView from './SectionView.vue'
+import CustomLayout from './CustomLayout.vue'
 import './style.css'
 
 export default {
   extends: DefaultTheme,
+  Layout: CustomLayout,
   enhanceApp({ app }) {
-    app.component('CategoryIndex', CategoryIndex)
-    app.component('LibraryView', LibraryView)
+    app.component('SectionView', SectionView)
   },
 }

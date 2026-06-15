@@ -16,6 +16,10 @@
   --vp-c-bg-alt: #f4f2ee;
   --vp-c-bg-soft: #f7f5f1;
 
+  /* 统一毛玻璃：像 macOS Dock，强模糊 + 低背景不透明度，保留通透感 */
+  --ca-glass-bg: rgba(248, 246, 242, 0.35);
+  --ca-glass-blur: saturate(180%) blur(20px);
+
   /* 字体：正文用系统中文 + 衬线感更弱的无衬线；代码用等宽 */
   --vp-font-family-base: -apple-system, BlinkMacSystemFont, 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', 'Source Han Sans SC', 'Noto Sans CJK SC',
@@ -43,6 +47,8 @@
 
   --ca-accent: #cf9285;
   --ca-accent-soft: rgba(207, 146, 133, 0.16);
+  --ca-glass-bg: rgba(28, 29, 33, 0.35);
+  --ca-glass-blur: saturate(180%) blur(20px);
 }
 
 /* 正文排版：行距宽松，适合长篇笔记阅读 */
@@ -207,14 +213,177 @@
   position: relative;
   z-index: 1;
 }
-/* 导航栏半透明，让顶部水彩透出来一点，更融合 */
-.VPNavBar {
+
+/* 顶部导航栏：完全透明，让水彩连续透上来（不加毛玻璃/分隔线，避免突兀矩形） */
+.VPNavBar,
+.VPNavBar .wrapper,
+.VPNavBar .content,
+.VPNavBar .content-body,
+.VPNavBar.has-sidebar .title,
+.VPNavBar.has-sidebar .content,
+.VPNavBar .divider,
+.VPNavBar .divider-line {
+  background-color: transparent !important;
+  border-bottom-color: transparent !important;
+  border-right-color: transparent !important;
+}
+.VPNavBar { border-bottom: none !important; }
+
+/* 导航栏 logo：放大、紧贴标题文字左侧 */
+.VPNavBarTitle .logo,
+.VPNavBarTitle .VPImage {
+  height: 36px !important;
+  width: auto !important;
+  margin: 0 6px 0 0 !important;
+}
+/* 标题容器内 logo 与文字紧凑对齐 */
+.VPNavBarTitle a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px;
+}
+
+/* 首页 hero：logo 居左 + 名称/介绍居右，横向紧凑排列 */
+.VPHero .container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.VPHero .main::before {
+  content: '';
+  display: block;
+  flex: 0 0 auto;
+  width: 96px;
+  height: 96px;
+  background-image: url('/logo.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+/* 让 logo 和文字在同一行：main 自身也变成 flex 横排 */
+.VPHero .main {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  text-align: left;
+}
+.VPHero .actions {
+  justify-content: flex-start;
+}
+
+@media (max-width: 640px) {
+  .VPHero .main { flex-direction: column; text-align: center; gap: 0.8rem; }
+  .VPHero .main::before { width: 96px; height: 96px; }
+  .VPHero .actions { justify-content: center; }
+}
+
+/* 搜索框靠左：文档页默认被推到右侧遮挡阅读，改为左对齐并限制宽度 */
+@media (min-width: 768px) {
+  .VPNavBarSearch {
+    justify-content: flex-start !important;
+    padding-left: 16px !important;
+  }
+  .VPNavBarSearch .DocSearch-Button {
+    margin: 0 !important;
+    max-width: 240px;
+  }
+}
+/* 文档阅读页隐藏搜索框（避免遮挡阅读；首页/板块页保留） */
+html.is-doc-page .VPNavBarSearch {
+  display: none !important;
+}
+/* 保留搜索框的页面：背景透明、描边加深以可辨识 */
+.DocSearch-Button {
+  background: transparent !important;
+  border: 1px solid var(--vp-c-text-3) !important;
+}
+.DocSearch-Button:hover {
+  border-color: var(--ca-accent) !important;
+  box-shadow: none !important;
+}
+
+/* 左上角站点标题"Code Academy" + 侧栏顶部遮罩：去白底，透明融入水彩 */
+.VPNavBarTitle .title-text,
+.VPNavBarTitle .title-line,
+.VPSidebar .curtain {
   background-color: transparent !important;
 }
-.VPNavBar.has-sidebar .content,
-.VPNavBar:not(.home) {
-  backdrop-filter: saturate(150%) blur(8px);
+.VPNavBarTitle.has-sidebar .title {
+  border-bottom-color: transparent !important;
 }
+
+/* 左侧文档侧栏：透明，与右侧水彩一致 */
+.VPSidebar {
+  background-color: transparent !important;
+  border-right: none !important;
+}
+.VPDocAside {
+  background-color: transparent !important;
+}
+/* 侧栏内分组标题/链接保持可读 */
+.VPSidebarItem.level-0 .text {
+  font-weight: 600;
+}
+
+/* 侧栏层级缩进：让每一级都有明显的递进缩进 + 左侧引导线 */
+.VPSidebarItem.level-0 > .items {
+  border-left: 1px solid var(--vp-c-divider);
+  padding-left: 16px;
+  margin-left: 2px;
+}
+.VPSidebarItem.level-1 .items,
+.VPSidebarItem.level-2 .items,
+.VPSidebarItem.level-3 .items,
+.VPSidebarItem.level-4 .items {
+  padding-left: 16px !important;
+}
+/* 一级标题更突出，与子级拉开层次 */
+.VPSidebarItem.level-0 > .item .text {
+  font-size: 0.95rem;
+}
+.VPSidebarItem.level-1 > .item .text {
+  font-weight: 500;
+}
+
+/* ===== 左侧目录折叠 ===== */
+/* 浮动折叠按钮：固定在左下角，始终可点（折叠/展开） */
+.ca-fab {
+  position: fixed;
+  left: 12px;
+  bottom: 20px;
+  z-index: 70;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--vp-c-divider);
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+  transition: color 0.2s, border-color 0.2s, transform 0.2s;
+  display: none;
+}
+.ca-fab:hover { color: var(--ca-accent); border-color: var(--ca-accent); transform: scale(1.08); }
+/* 仅桌面端带侧栏时显示 */
+@media (min-width: 961px) {
+  .ca-fab { display: block; }
+  /* 折叠：左右目录淡出收起，正文位置与宽度完全不动（不重排、不左右拐） */
+  html.sidebar-collapsed .VPSidebar {
+    opacity: 0;
+    pointer-events: none;
+  }
+  html.sidebar-collapsed .VPDoc .aside {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+/* 平滑淡出 */
+.VPSidebar { transition: opacity 0.25s ease; }
+.VPDoc .aside { transition: opacity 0.25s ease; }
 
 /* 移动端：正方形图在窄屏顶部彩带会偏高，缩短高度、改用覆盖式定位避免左右留白 */
 @media (max-width: 768px) {
@@ -226,5 +395,21 @@
     -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 0%, #000 30%, transparent 100%);
   }
+
+  /* 移动端左侧目录抽屉：浮在正文上，需较实的毛玻璃避免文字重叠 */
+  .VPSidebar {
+    background-color: rgba(248, 246, 242, 0.92) !important;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+  }
+  /* 状态条（置顶的"本页目录"切换条）：较实毛玻璃，去掉白底 */
+  .VPLocalNav {
+    background-color: rgba(248, 246, 242, 0.85) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom-color: var(--vp-c-divider) !important;
+  }
+  .dark .VPSidebar { background-color: rgba(26, 27, 30, 0.94) !important; }
+  .dark .VPLocalNav { background-color: rgba(26, 27, 30, 0.88) !important; }
 }
 

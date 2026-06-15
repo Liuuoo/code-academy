@@ -79,14 +79,13 @@ function toSidebar(nodes) {
   )
 }
 
-const sections = ['notes', 'solutions', 'literacy', 'research']
+const sections = ['notes', 'solutions', 'research']
 
 // 板块展示元数据（顺序即页面呈现顺序）
 const sectionMeta = {
   notes: { title: '课程笔记', desc: '按班级与课程系列整理的日常教学笔记' },
-  solutions: { title: '题解', desc: '竞赛与练习题目的解析，按赛事系列分组' },
-  literacy: { title: '信息素养', desc: '信息素养大赛的备课讲义、题型整理与真题' },
-  research: { title: '研究随笔', desc: '工程、数据、控制、毕业设计等方向的研究笔记' },
+  solutions: { title: '题解分享', desc: '竞赛与练习题目的解析，按赛事系列分组' },
+  research: { title: '个人随笔', desc: '学习、研究与日常思考的记录' },
 }
 
 export const catalog = {}
@@ -104,3 +103,7 @@ export const library = sections.map((s) => ({
   desc: sectionMeta[s].desc,
   groups: catalog[`/${s}/`],
 }))
+
+// 板块元数据（供独立页面 SectionView 读取标题/描述）
+export const sectionInfo = sectionMeta
+

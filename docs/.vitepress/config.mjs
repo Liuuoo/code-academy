@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitepress'
 import mathjax3 from 'markdown-it-mathjax3'
-import { sidebar, catalog, library } from './sidebar.mjs'
+import { sidebar, catalog, library, sectionInfo } from './sidebar.mjs'
 
 export default defineConfig({
   lang: 'zh-CN',
@@ -11,6 +11,9 @@ export default defineConfig({
 
   head: [
     ['meta', { name: 'viewport', content: 'width=device-width,initial-scale=1' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16.png' }],
+    ['link', { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }],
   ],
 
   markdown: {
@@ -22,19 +25,17 @@ export default defineConfig({
   },
 
   themeConfig: {
-    logo: undefined,
+    logo: '/logo.png',
     outline: { level: [2, 3], label: '本页目录' },
     nav: [
-      { text: '首页', link: '/' },
-      { text: '知识库', link: '/library/' },
       { text: '课程笔记', link: '/notes/' },
-      { text: '题解', link: '/solutions/' },
-      { text: '信息素养', link: '/literacy/' },
-      { text: '研究随笔', link: '/research/' },
+      { text: '题解分享', link: '/solutions/' },
+      { text: '个人随笔', link: '/research/' },
     ],
     sidebar,
     catalog,
     library,
+    sectionInfo,
     search: {
       provider: 'local',
       options: {

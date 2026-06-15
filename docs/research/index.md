@@ -1,5 +1,7 @@
-# 研究随笔
+---
+layout: page
+sidebar: false
+aside: false
+---
 
-工程、数据、控制、毕业设计等方向的学习与研究笔记。
-
-<CategoryIndex base="/research/" />
+<SectionView base="/research/" />
