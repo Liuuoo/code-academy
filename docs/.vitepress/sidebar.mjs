@@ -50,3 +50,5 @@ function buildTree(absDir, urlBase) {
 
 export const sidebarNotes = buildTree(path.join(docsRoot, 'notes'), '/notes/')
 export const sidebarSolutions = buildTree(path.join(docsRoot, 'solutions'), '/solutions/')
+export const sidebarLiteracy = buildTree(path.join(docsRoot, 'literacy'), '/literacy/')
+export const sidebarResearch = buildTree(path.join(docsRoot, 'research'), '/research/')
