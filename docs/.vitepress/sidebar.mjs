@@ -81,6 +81,14 @@ function toSidebar(nodes) {
 
 const sections = ['notes', 'solutions', 'literacy', 'research']
 
+// 板块展示元数据（顺序即页面呈现顺序）
+const sectionMeta = {
+  notes: { title: '课程笔记', desc: '按班级与课程系列整理的日常教学笔记' },
+  solutions: { title: '题解', desc: '竞赛与练习题目的解析，按赛事系列分组' },
+  literacy: { title: '信息素养', desc: '信息素养大赛的备课讲义、题型整理与真题' },
+  research: { title: '研究随笔', desc: '工程、数据、控制、毕业设计等方向的研究笔记' },
+}
+
 export const catalog = {}
 export const sidebar = {}
 for (const s of sections) {
@@ -88,3 +96,11 @@ for (const s of sections) {
   catalog[`/${s}/`] = tree
   sidebar[`/${s}/`] = toSidebar(tree)
 }
+
+// 单页知识库用：按板块聚合的完整数据
+export const library = sections.map((s) => ({
+  id: s,
+  title: sectionMeta[s].title,
+  desc: sectionMeta[s].desc,
+  groups: catalog[`/${s}/`],
+}))

@@ -7,9 +7,9 @@ hero:
   tagline: 日常教学沉淀，系统整理，持续更新。
   actions:
     - theme: brand
-      text: 浏览笔记
-      link: /notes/
+      text: 进入知识库
+      link: /library/
     - theme: alt
-      text: 查看题解
-      link: /solutions/
+      text: 课程笔记
+      link: /notes/
 ---
