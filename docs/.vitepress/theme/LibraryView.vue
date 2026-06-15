@@ -48,8 +48,19 @@ function loose(section) {
             <div v-if="g.description" class="lib-card__desc">{{ g.description }}</div>
             <div class="lib-card__list">
               <template v-for="it in g.items" :key="it.link || it.text">
-                <a v-if="it.link" :href="withBase(it.link)" class="lib-card__item">{{ it.text }}</a>
-                <span v-else class="lib-card__subgroup">{{ it.text }}</span>
+                <!-- 子分类：小标题分段 + 段内文章 -->
+                <div v-if="it.type === 'group'" class="lib-card__seg">
+                  <div class="lib-card__seg-title">{{ it.text }}</div>
+                  <template v-for="sub in it.items" :key="sub.link || sub.text">
+                    <a v-if="sub.link" :href="withBase(sub.link)" class="lib-card__item">{{ sub.text }}</a>
+                    <div v-else class="lib-card__seg lib-card__seg--nested">
+                      <div class="lib-card__seg-title lib-card__seg-title--sub">{{ sub.text }}</div>
+                      <a v-for="leaf in sub.items" :key="leaf.link" :href="withBase(leaf.link)" class="lib-card__item">{{ leaf.text }}</a>
+                    </div>
+                  </template>
+                </div>
+                <!-- 直接文章 -->
+                <a v-else :href="withBase(it.link)" class="lib-card__item">{{ it.text }}</a>
               </template>
             </div>
           </div>
@@ -131,12 +142,14 @@ function loose(section) {
   margin: 0.35rem 0 0;
 }
 .lib-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-top: 1.2rem;
 }
 .lib-card {
+  flex: 0 0 300px;
+  width: 300px;
   border: 1px solid var(--vp-c-divider);
   border-radius: 10px;
   padding: 1rem 1.1rem 0.6rem;
@@ -144,8 +157,8 @@ function loose(section) {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .lib-card:hover {
-  border-color: var(--vp-c-brand-1);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  border-color: var(--ca-accent);
+  box-shadow: 0 2px 14px var(--ca-accent-soft);
 }
 .lib-card__head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
 .lib-card__title { font-weight: 600; font-size: 0.95rem; }
@@ -156,6 +169,12 @@ function loose(section) {
   flex-direction: column;
   max-height: 11rem;
   overflow-y: auto;
+  scrollbar-width: thin;
+}
+.lib-card__list::-webkit-scrollbar { width: 6px; }
+.lib-card__list::-webkit-scrollbar-thumb {
+  background: var(--vp-c-divider);
+  border-radius: 3px;
 }
 .lib-card__item {
   font-size: 0.86rem;
@@ -165,10 +184,31 @@ function loose(section) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.15s ease;
 }
-.lib-card__item:hover { color: var(--vp-c-brand-1); }
+.lib-card__item:hover { color: var(--ca-accent); }
 .lib-card__subgroup { font-size: 0.76rem; color: var(--vp-c-text-3); font-weight: 600; margin-top: 0.4rem; }
 .lib-empty { color: var(--vp-c-text-2); }
+
+/* 卡内子分类分段 */
+.lib-card__seg { margin-top: 0.5rem; }
+.lib-card__seg-title {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--vp-c-divider);
+  margin-bottom: 0.2rem;
+}
+.lib-card__seg-title--sub {
+  border-bottom: none;
+  padding-left: 0.6rem;
+  color: var(--vp-c-text-3);
+  font-weight: 500;
+}
+.lib-card__seg--nested { margin-left: 0.4rem; }
+.lib-card__seg--nested .lib-card__item { padding-left: 0.6rem; }
 
 .lib-tag { font-size: 0.7rem; padding: 0.05rem 0.45rem; border-radius: 4px; font-weight: 600; line-height: 1.5; }
 .lib-tag--default { color: var(--vp-c-text-2); background: var(--vp-c-default-soft); }
@@ -194,7 +234,8 @@ function loose(section) {
     border: 1px solid var(--vp-c-divider);
     padding: 0.35rem 0.8rem;
   }
-  .lib-cards { grid-template-columns: 1fr; gap: 0.8rem; }
+  .lib-cards { gap: 0.8rem; }
+  .lib-card { flex: 1 1 100%; width: 100%; }
   .lib-card__list { max-height: none; }
 }
 </style>

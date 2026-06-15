@@ -25,6 +25,10 @@
 
   /* 内容最大宽度收窄一点，长文更易读 */
   --vp-layout-max-width: 1440px;
+
+  /* 莫兰迪强调色：低饱和橙红，用于 hover/选中 */
+  --ca-accent: #bd7b6c;
+  --ca-accent-soft: rgba(189, 123, 108, 0.12);
 }
 
 .dark {
@@ -36,6 +40,9 @@
   --vp-c-bg: #1a1b1e;
   --vp-c-bg-alt: #141518;
   --vp-c-bg-soft: #202125;
+
+  --ca-accent: #cf9285;
+  --ca-accent-soft: rgba(207, 146, 133, 0.16);
 }
 
 /* 正文排版：行距宽松，适合长篇笔记阅读 */

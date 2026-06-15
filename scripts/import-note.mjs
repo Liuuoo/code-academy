@@ -96,6 +96,25 @@ function findImage(startDir, fname) {
 // --- 2 & 3. frontmatter title + 一级标题 ---
 const title = titleArg || (raw.match(/^#\s+(.+)$/m)?.[1]?.trim()) || baseName
 
+// VitePress 把 md 当 Vue 模板，正文里的 {{ }} 会被当插值导致构建失败。
+// 按 围栏代码块 / 行内代码 分段：代码内原样保留，其余处的 {{ }} 转义。
+// （行内代码里的 {{ 用零宽分隔避免被当插值，又不影响显示）
+function escapeMustache(text) {
+  const parts = text.split(/(```[\s\S]*?```|`[^`\n]*`)/g)
+  return parts
+    .map((seg, i) => {
+      if (i % 2 === 1) {
+        // 代码段：行内代码用零宽空格断开 {{，围栏块原样
+        if (seg.startsWith('```')) return seg
+        return seg.replace(/\{\{/g, '{​{').replace(/\}\}/g, '}​}')
+      }
+      // 普通文本：转义为 HTML 实体
+      return seg.replace(/\{\{/g, '&#123;&#123;').replace(/\}\}/g, '&#125;&#125;')
+    })
+    .join('')
+}
+raw = escapeMustache(raw)
+
 let body = raw
 const hasFm = /^---\r?\n[\s\S]*?\r?\n---/.test(body)
 if (!hasFm) {
