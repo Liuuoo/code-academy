@@ -1,7 +1,9 @@
-// upload.js — 上传后台前端逻辑
+// upload.js — 上传后台前端逻辑（四层：板块→栏→框→文章）
 const $ = (id) => document.getElementById(id)
 const drop = $('drop'), fileInput = $('fileInput'), fileName = $('fileName')
-const sectionSel = $('section'), groupSel = $('group'), msg = $('msg')
+const sectionSel = $('section'), colSel = $('col'), boxSel = $('box')
+const newColInput = $('newCol'), newBoxInput = $('newBox'), msg = $('msg')
+const NEW = '__new__'
 let tree = {}
 
 // 拖拽
@@ -16,31 +18,47 @@ fileInput.addEventListener('change', showFile)
 function showFile() {
   const f = fileInput.files[0]
   fileName.textContent = f ? '已选择：' + f.name : ''
-  if (f && !$('title').value) {
-    $('title').value = f.name.replace(/\.[^.]+$/, '')
-  }
+  if (f && !$('title').value) $('title').value = f.name.replace(/\.[^.]+$/, '')
 }
 
-// 加载板块/系列树
+// 加载板块树
 fetch('/api/tree').then(r => r.json()).then(t => {
   tree = t
   sectionSel.innerHTML = Object.entries(t).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')
-  renderGroups()
+  renderCols()
 })
-sectionSel.addEventListener('change', renderGroups)
-function flatten(dirs, depth = 0) {
-  let out = []
-  for (const d of dirs) {
-    out.push({ path: d.path, label: '　'.repeat(depth) + d.name })
-    if (d.children && d.children.length) out = out.concat(flatten(d.children, depth + 1))
-  }
-  return out
-}
-function renderGroups() {
+
+sectionSel.addEventListener('change', renderCols)
+colSel.addEventListener('change', () => { toggleNewCol(); renderBoxes() })
+boxSel.addEventListener('change', toggleNewBox)
+
+// 栏下拉：列出当前板块的二级文件夹 + “新建栏”
+function renderCols() {
   const sec = tree[sectionSel.value]
-  const opts = ['<option value="">（板块根目录）</option>']
-    .concat(flatten(sec.dirs).map(d => `<option value="${d.path}">${d.label}</option>`))
-  groupSel.innerHTML = opts.join('')
+  const opts = (sec.dirs || []).map(d => `<option value="${d.name}">${d.name}</option>`)
+  opts.push(`<option value="${NEW}">+ 新建栏…</option>`)
+  colSel.innerHTML = opts.join('')
+  toggleNewCol()
+  renderBoxes()
+}
+// 框下拉：列出当前栏的三级文件夹 + “新建框”
+function renderBoxes() {
+  const sec = tree[sectionSel.value]
+  let boxes = []
+  if (colSel.value !== NEW) {
+    const col = (sec.dirs || []).find(d => d.name === colSel.value)
+    boxes = (col && col.children) || []
+  }
+  const opts = boxes.map(b => `<option value="${b.name}">${b.name}</option>`)
+  opts.push(`<option value="${NEW}">+ 新建框…</option>`)
+  boxSel.innerHTML = opts.join('')
+  toggleNewBox()
+}
+function toggleNewCol() {
+  newColInput.style.display = colSel.value === NEW ? 'block' : 'none'
+}
+function toggleNewBox() {
+  newBoxInput.style.display = boxSel.value === NEW ? 'block' : 'none'
 }
 
 function showMsg(text, ok) {
@@ -52,15 +70,32 @@ function showMsg(text, ok) {
 $('submit').addEventListener('click', async () => {
   const f = fileInput.files[0]
   if (!f) return showMsg('请先选择文件', false)
+
+  // 解析栏
+  const col = colSel.value === NEW ? newColInput.value.trim() : colSel.value
+  if (!col) return showMsg('请选择或填写「栏」', false)
+  // 解析框
+  const box = boxSel.value === NEW ? newBoxInput.value.trim() : boxSel.value
+  if (!box) return showMsg('请选择或填写「框」', false)
+
+  // subPath = 栏/框
+  const subPath = `${col}/${box}`
+  const isNewBox = boxSel.value === NEW
+
   const fd = new FormData()
   fd.append('file', f)
   fd.append('section', sectionSel.value)
-  fd.append('subPath', groupSel.value)
+  fd.append('subPath', subPath)
   fd.append('title', $('title').value)
-  fd.append('newGroup', $('newGroup').value)
-  fd.append('groupDesc', $('groupDesc').value)
-  fd.append('groupTag', $('groupTag').value)
-  fd.append('groupTagType', 'new')
+  // 新建框时把描述/标签写到框的 _meta.json
+  if (isNewBox) {
+    fd.append('newGroup', '')          // 不再额外拼接，subPath 已含框
+    fd.append('groupDesc', $('groupDesc').value)
+    fd.append('groupTag', $('groupTag').value)
+    fd.append('groupTagType', 'new')
+    fd.append('metaTarget', subPath)   // 告诉后端给这个框写 meta
+  }
+
   $('submit').disabled = true
   try {
     const r = await fetch('/api/upload', { method: 'POST', body: fd })
@@ -68,8 +103,9 @@ $('submit').addEventListener('click', async () => {
     if (r.ok) {
       showMsg('✓ ' + j.message + (j.path ? '（' + j.path + '）' : ''), true)
       fileInput.value = ''; fileName.textContent = ''; $('title').value = ''
-      $('newGroup').value = ''; $('groupDesc').value = ''; $('groupTag').value = ''
-      fetch('/api/tree').then(r => r.json()).then(t => { tree = t; renderGroups() })
+      newColInput.value = ''; newBoxInput.value = ''
+      $('groupDesc').value = ''; $('groupTag').value = ''
+      fetch('/api/tree').then(r => r.json()).then(t => { tree = t; renderCols() })
     } else {
       showMsg('✖ ' + (j.error || '上传失败'), false)
     }

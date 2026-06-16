@@ -51,23 +51,26 @@
   <label>标题（留空则用文件名或首个标题）</label>
   <input type="text" id="title" placeholder="例：笔记 12 · 循环结构">
 
+  <label>板块</label>
+  <select id="section"></select>
+
   <div class="row">
     <div>
-      <label>板块</label>
-      <select id="section"></select>
+      <label>栏（二级分类）</label>
+      <select id="col"></select>
+      <input type="text" id="newCol" placeholder="新建栏名，如 零基础班" style="margin-top:.4rem;display:none">
     </div>
     <div>
-      <label>系列 / 子分类</label>
-      <select id="group"></select>
+      <label>框（三级分类）</label>
+      <select id="box"></select>
+      <input type="text" id="newBox" placeholder="新建框名，如 周六下午班" style="margin-top:.4rem;display:none">
     </div>
   </div>
 
   <fieldset>
-    <legend>或新建一个系列</legend>
-    <label>新系列名（填了就忽略上面的系列选择）</label>
-    <input type="text" id="newGroup" placeholder="例：周三晚班">
+    <legend>新建框时的可选信息</legend>
     <div class="row">
-      <div><label>系列描述</label><input type="text" id="groupDesc" placeholder="一句话介绍"></div>
+      <div><label>框描述</label><input type="text" id="groupDesc" placeholder="一句话介绍"></div>
       <div><label>标签</label><input type="text" id="groupTag" placeholder="如 进行中"></div>
     </div>
   </fieldset>

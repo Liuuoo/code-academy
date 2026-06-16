@@ -30,9 +30,8 @@ const demosDir = path.join(docsRoot, 'public', 'demos')
 
 const SECTIONS = {
   notes: '课程笔记',
-  solutions: '题解',
-  literacy: '信息素养',
-  research: '研究随笔',
+  solutions: '题解分享',
+  research: '个人随笔',
 }
 
 const PORT = process.env.ADMIN_PORT || 4321
@@ -169,16 +168,17 @@ function resolveTarget(section, subPath) {
 
 // 处理一次上传：转换并落位，返回结果
 function handleUpload(fields, files) {
-  const { section, subPath = '', title: titleField = '', newGroup = '', groupDesc = '', groupTag = '', groupTagType = 'default' } = fields
+  const { section, subPath = '', title: titleField = '', groupDesc = '', groupTag = '', groupTagType = 'default', metaTarget = '' } = fields
   const file = files.find((f) => f.name === 'file')
   if (!file) throw new Error('没有收到文件')
 
-  // 子路径：已选 subPath，或新建系列 newGroup
-  let finalSub = subPath
-  if (newGroup.trim()) {
-    finalSub = subPath ? `${subPath}/${slugify(newGroup.trim())}` : slugify(newGroup.trim())
-  }
-  const targetDir = resolveTarget(section, finalSub)
+  // subPath 已是「栏/框」完整相对路径（前端拼好），逐段 slugify 防注入
+  const safeSub = subPath
+    .split('/')
+    .map((s) => slugify(s.trim()))
+    .filter(Boolean)
+    .join('/')
+  const targetDir = resolveTarget(section, safeSub)
   fs.mkdirSync(targetDir, { recursive: true })
 
   const ext = path.extname(file.filename).toLowerCase()
@@ -203,15 +203,14 @@ function handleUpload(fields, files) {
   const { body, title, missingImages } = transformMarkdown(raw, {
     title: titleField.trim() || undefined,
     baseName,
-    // 后台上传无法访问 vault 文件系统，图片需用户单独上传后手动引用
-    resolveImage: () => null,
+    resolveImage: () => null, // 后台无法访问 vault，图片需单独上传后手动引用
     copyImage: makeImageCopier(imagesDir),
   })
   const outPath = path.join(targetDir, `${slugify(title)}.md`)
   fs.writeFileSync(outPath, body, 'utf-8')
 
-  // 若新建系列且给了描述/标签，写 _meta.json
-  if (newGroup.trim() && (groupDesc || groupTag)) {
+  // 新建框时给该框写 _meta.json（描述/标签）
+  if (metaTarget && (groupDesc || groupTag)) {
     const meta = {}
     if (groupDesc) meta.description = groupDesc
     if (groupTag) { meta.tag = groupTag; meta.tagType = groupTagType }
