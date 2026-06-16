@@ -231,18 +231,19 @@ function handleUpload(fields, files) {
 // 触发重建
 let building = false
 let lastBuildLog = ''
+// 发布上线：跑 deploy.sh（本地构建 + 同步到服务器 + 重启容器），一步到位
 function runBuild() {
-  if (building) return { ok: false, message: '正在构建中…' }
+  if (building) return { ok: false, message: '正在发布中…' }
   building = true
   lastBuildLog = ''
-  const child = spawn('npm', ['run', 'build'], { cwd: repoRoot })
+  const child = spawn('bash', ['deploy/deploy.sh'], { cwd: repoRoot })
   child.stdout.on('data', (d) => (lastBuildLog += d))
   child.stderr.on('data', (d) => (lastBuildLog += d))
   child.on('close', (code) => {
     building = false
-    lastBuildLog += `\n[构建结束，退出码 ${code}]`
+    lastBuildLog += `\n[发布结束，退出码 ${code}${code === 0 ? '：已上线 https://note.liuooo.com' : '：失败，查看日志'}]`
   })
-  return { ok: true, message: '构建已开始' }
+  return { ok: true, message: '发布已开始，约 10-30 秒后上线，可点"查看构建"看进度' }
 }
 
 // ---------- 页面 ----------

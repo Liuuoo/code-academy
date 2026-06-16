@@ -116,8 +116,9 @@ $('submit').addEventListener('click', async () => {
   }
 })
 
-// 重建
+// 发布上线（构建 + 同步到服务器）
 $('rebuild').addEventListener('click', async () => {
+  if (!confirm('确认发布上线？将构建并同步到 note.liuooo.com')) return
   const r = await fetch('/api/build', { method: 'POST' })
   const j = await r.json()
   showMsg(j.message, j.ok)
