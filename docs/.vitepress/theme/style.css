@@ -131,13 +131,6 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
-  /* 行号在窄屏占地，移动端隐藏 */
-  .vp-doc [class*='language-'] .line-numbers-wrapper {
-    display: none;
-  }
-  .vp-doc [class*='language-'].line-numbers-mode .line-numbers-wrapper {
-    display: none;
-  }
 
   /* 表格：包一层横向滚动，避免撑破 */
   .vp-doc table {
@@ -228,6 +221,33 @@
   border-right-color: transparent !important;
 }
 .VPNavBar { border-bottom: none !important; }
+
+/* 隐藏文档页顶部的「本页目录」横条（VPLocalNav）。
+   判定桌面：横向(宽≥高) 且 ≥960px（此时左侧目录常驻），隐藏多余白条。
+   竖向或窄屏（移动端）保留它——靠它打开侧栏抽屉。 */
+@media (orientation: landscape) and (min-width: 960px) {
+  .VPLocalNav {
+    display: none !important;
+  }
+}
+/* 保留显示的那条横条（移动端/竖屏）：用统一通透毛玻璃，透出水彩、融入背景 */
+.VPLocalNav {
+  background-color: var(--ca-glass-bg) !important;
+  backdrop-filter: var(--ca-glass-blur);
+  -webkit-backdrop-filter: var(--ca-glass-blur);
+  border-bottom-color: var(--vp-c-divider) !important;
+}
+
+/* 文档正文靠左：取消居中，紧贴左侧目录，只留约 2 格缩进 */
+@media (min-width: 960px) {
+  .VPDoc.has-aside .content-container {
+    max-width: 760px !important;
+    margin: 0 !important;
+  }
+  .VPDoc.has-aside .content {
+    padding-left: 0 !important;
+  }
+}
 
 /* 导航栏 logo：放大、紧贴标题文字左侧 */
 .VPNavBarTitle .logo,
@@ -402,14 +422,70 @@ html.is-doc-page .VPNavBarSearch {
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
-  /* 状态条（置顶的"本页目录"切换条）：较实毛玻璃，去掉白底 */
-  .VPLocalNav {
-    background-color: rgba(248, 246, 242, 0.85) !important;
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom-color: var(--vp-c-divider) !important;
-  }
   .dark .VPSidebar { background-color: rgba(26, 27, 30, 0.94) !important; }
   .dark .VPLocalNav { background-color: rgba(26, 27, 30, 0.88) !important; }
 }
 
+
+/* ============================================================
+   代码块：mac 风格三圆点装饰 + 顶部留白
+   ============================================================ */
+.vp-doc div[class*='language-'] {
+  position: relative;
+  padding-top: 36px;        /* 给顶部圆点条留空间 */
+  border-radius: 8px;
+}
+/* 顶部三个圆点 */
+.vp-doc div[class*='language-']::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff5f56;  /* 红 */
+  box-shadow: 20px 0 0 #ffbd2e,   /* 黄 */
+              40px 0 0 #27c93f;   /* 绿 */
+  z-index: 2;
+}
+/* 语言标签移到圆点右侧、淡化 */
+.vp-doc div[class*='language-'] .lang {
+  top: 10px;
+  right: 14px;
+  color: var(--vp-c-text-3);
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.vp-doc div[class*='language-']:hover .lang { opacity: 1; }
+/* 复制按钮下移，避开圆点条 */
+.vp-doc div[class*='language-'] .copy {
+  top: 8px;
+}
+/* pre 顶部内边距收一点（圆点条已占位） */
+.vp-doc div[class*='language-'] pre {
+  padding-top: 4px;
+}
+
+/* 行号列：避开顶部圆点条，与代码逐行对齐 */
+.vp-doc div[class*='language-'] .line-numbers-wrapper {
+  top: 36px;            /* 从圆点条下方开始 */
+  padding-top: 4px;     /* 与 pre 的 padding-top 一致，逐行对齐 */
+  border-right-color: var(--vp-c-divider);
+}
+
+/* 代码块背景：统一毛玻璃，透出水彩、与卡片一致 */
+.vp-doc div[class*='language-'] {
+  background: var(--ca-glass-bg) !important;
+  backdrop-filter: var(--ca-glass-blur);
+  -webkit-backdrop-filter: var(--ca-glass-blur);
+  border: 1px solid var(--vp-c-divider);
+}
+.vp-doc div[class*='language-'] pre,
+.vp-doc div[class*='language-'] code {
+  background: transparent !important;
+}
+/* 行内代码也用淡玻璃质感 */
+.vp-doc :not(pre) > code {
+  background: var(--ca-glass-bg);
+}

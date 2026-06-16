@@ -29,6 +29,6 @@ echo "==> 3/4 启动/重启容器"
 ssh "$SSH_HOST" "cd $REMOTE_DIR && docker compose -f deploy/docker-compose.yml up -d"
 
 echo "==> 4/4 校验"
-ssh "$SSH_HOST" "curl -sI -m5 http://127.0.0.1:8080 | head -1 || echo '本地 8080 暂无响应，检查容器与端口'"
+ssh "$SSH_HOST" "curl -sI -m5 http://127.0.0.1:80 | head -1 || echo '本地 80 暂无响应，检查容器与端口'"
 
-echo "✓ 部署完成。对外访问取决于 Cloudflare / 反代如何指向本机 8080。"
+echo "✓ 部署完成。对外访问取决于 Cloudflare 指向服务器 80 端口。"
