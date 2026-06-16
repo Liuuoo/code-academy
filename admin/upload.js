@@ -101,11 +101,16 @@ $('submit').addEventListener('click', async () => {
     const r = await fetch('/api/upload', { method: 'POST', body: fd })
     const j = await r.json()
     if (r.ok) {
-      showMsg('✓ ' + j.message + (j.path ? '（' + j.path + '）' : ''), true)
+      // 上传成功后自动发布上线（落本地 → 构建 → 同步服务器，一步到位）
+      showMsg('✓ ' + j.message + '，正在发布上线…', true)
       fileInput.value = ''; fileName.textContent = ''; $('title').value = ''
       newColInput.value = ''; newBoxInput.value = ''
       $('groupDesc').value = ''; $('groupTag').value = ''
       fetch('/api/tree').then(r => r.json()).then(t => { tree = t; renderCols() })
+      // 触发发布
+      const br = await fetch('/api/build', { method: 'POST' })
+      const bj = await br.json()
+      showMsg('✓ 已上传并' + bj.message, bj.ok)
     } else {
       showMsg('✖ ' + (j.error || '上传失败'), false)
     }
@@ -116,7 +121,7 @@ $('submit').addEventListener('click', async () => {
   }
 })
 
-// 发布上线（构建 + 同步到服务器）
+// 单独的「发布上线」按钮：仅重新发布（不上传新文件时用，如改了排序/删了文件）
 $('rebuild').addEventListener('click', async () => {
   if (!confirm('确认发布上线？将构建并同步到 note.liuooo.com')) return
   const r = await fetch('/api/build', { method: 'POST' })
