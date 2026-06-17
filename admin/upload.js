@@ -162,9 +162,32 @@ async function loadDocs() {
   docList.innerHTML = docs.map(d =>
     `<li style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .2rem;border-bottom:1px solid var(--vp-c-divider,#eee)">
       <span>${d.title}</span>
-      <button data-file="${d.name}" class="del-btn" style="border:1px solid #c33;color:#c33;background:transparent;border-radius:4px;padding:.2rem .7rem;cursor:pointer">删除</button>
+      <span style="flex:0 0 auto;display:flex;gap:.5rem">
+        <button data-file="${d.name}" data-title="${d.title}" class="ren-btn" style="border:1px solid #3a5a8c;color:#3a5a8c;background:transparent;border-radius:4px;padding:.2rem .7rem;cursor:pointer">重命名</button>
+        <button data-file="${d.name}" class="del-btn" style="border:1px solid #c33;color:#c33;background:transparent;border-radius:4px;padding:.2rem .7rem;cursor:pointer">删除</button>
+      </span>
     </li>`).join('')
   docList.querySelectorAll('.del-btn').forEach(btn => btn.addEventListener('click', () => delDoc(btn.dataset.file)))
+  docList.querySelectorAll('.ren-btn').forEach(btn => btn.addEventListener('click', () => renDoc(btn.dataset.file, btn.dataset.title)))
+}
+async function renDoc(file, oldTitle) {
+  const title = prompt('输入新标题：', oldTitle)
+  if (title === null) return
+  if (!title.trim()) { mMsg.textContent = '✖ 标题不能为空'; mMsg.className = 'msg err'; return }
+  const subPath = [mCol.value, mBox.value].filter(Boolean).join('/')
+  const r = await fetch('/api/rename-doc', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ section: mSection.value, subPath, file, title: title.trim() })
+  })
+  const j = await r.json()
+  if (r.ok) {
+    mMsg.textContent = '✓ 已重命名为「' + j.title + '」，记得点"仅重新发布"同步线上'
+    mMsg.className = 'msg ok'
+    const t = await (await fetch('/api/tree')).json(); tree = t
+    loadDocs(); renderCols()
+  } else {
+    mMsg.textContent = '✖ ' + (j.error || '重命名失败'); mMsg.className = 'msg err'
+  }
 }
 async function delDoc(file) {
   if (!confirm(`确认删除「${file.replace(/\.md$/, '')}」？此操作不可恢复。\n删除后需点"仅重新发布"才会同步到线上。`)) return
@@ -188,6 +211,31 @@ async function delDoc(file) {
 mSection.addEventListener('change', mRenderCols)
 mCol.addEventListener('change', mRenderBoxes)
 mBox.addEventListener('change', loadDocs)
+
+// 重命名栏 / 框
+async function renameDir(level) {
+  const cur = level === 'col' ? mCol.value : mBox.value
+  if (!cur) { mMsg.textContent = '✖ 没有可重命名的' + (level === 'col' ? '栏' : '框'); mMsg.className = 'msg err'; return }
+  const subPath = level === 'col' ? mCol.value : [mCol.value, mBox.value].join('/')
+  const name = prompt(`输入新的${level === 'col' ? '栏' : '框'}名：`, cur)
+  if (name === null) return
+  if (!name.trim()) { mMsg.textContent = '✖ 名称不能为空'; mMsg.className = 'msg err'; return }
+  const r = await fetch('/api/rename-dir', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ section: mSection.value, subPath, name: name.trim() })
+  })
+  const j = await r.json()
+  if (r.ok) {
+    mMsg.textContent = '✓ 已重命名为「' + j.name + '」，记得点"仅重新发布"同步线上'
+    mMsg.className = 'msg ok'
+    const t = await (await fetch('/api/tree')).json(); tree = t
+    mRenderCols(); renderCols()
+  } else {
+    mMsg.textContent = '✖ ' + (j.error || '重命名失败'); mMsg.className = 'msg err'
+  }
+}
+$('renCol').addEventListener('click', () => renameDir('col'))
+$('renBox').addEventListener('click', () => renameDir('box'))
 
 // tree 加载完成后初始化管理区（tree 在文件顶部 fetch）
 const _initTree = setInterval(() => {

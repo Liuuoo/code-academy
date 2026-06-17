@@ -202,6 +202,60 @@ function deleteDoc(section, subPath, fileName) {
   return { deleted: path.relative(repoRoot, target), removedDir }
 }
 
+// 重命名文章：更新 frontmatter title + 重命名文件（文件名由新标题 slug 化）
+function renameDoc(section, subPath, fileName, newTitle) {
+  if (!fileName || !fileName.endsWith('.md') || fileName.includes('/') || fileName.includes('..')) {
+    throw new Error('非法文件名')
+  }
+  if (fileName === 'index.md') throw new Error('板块入口页不可重命名')
+  if (!subPath || !subPath.trim()) throw new Error('不能重命名板块根目录文件')
+  const title = (newTitle || '').trim()
+  if (!title) throw new Error('标题不能为空')
+
+  const dir = resolveTarget(section, subPath)
+  const oldPath = path.join(dir, fileName)
+  if (!oldPath.startsWith(dir) || !fs.existsSync(oldPath)) throw new Error('文件不存在')
+
+  // 更新 frontmatter title
+  let body = fs.readFileSync(oldPath, 'utf-8')
+  if (/^---\r?\n[\s\S]*?\r?\n---/.test(body)) {
+    if (/^title:/m.test(body)) {
+      body = body.replace(/^title:.*$/m, `title: ${title}`)
+    } else {
+      body = body.replace(/^---\r?\n/, `---\ntitle: ${title}\n`)
+    }
+  } else {
+    body = `---\ntitle: ${title}\n---\n\n${body}`
+  }
+
+  const newName = `${slugify(title)}.md`
+  const newPath = path.join(dir, newName)
+  if (newPath !== oldPath && fs.existsSync(newPath)) throw new Error('已存在同名文章')
+  fs.writeFileSync(oldPath, body, 'utf-8')
+  if (newPath !== oldPath) fs.renameSync(oldPath, newPath)
+  return { renamed: path.relative(repoRoot, newPath), title }
+}
+
+// 重命名栏/框文件夹（三大类板块不可改）
+function renameDir(section, subPath, newName) {
+  if (!subPath || !subPath.trim()) throw new Error('三大类板块不可重命名')
+  const name = (newName || '').trim()
+  if (!name) throw new Error('名称不能为空')
+  const safe = slugify(name)
+  if (!safe) throw new Error('名称无效')
+
+  const oldDir = resolveTarget(section, subPath)
+  const base = path.join(docsRoot, section)
+  if (oldDir === base) throw new Error('三大类板块不可重命名')
+  if (!fs.existsSync(oldDir)) throw new Error('文件夹不存在')
+
+  const newDir = path.join(path.dirname(oldDir), safe)
+  if (!newDir.startsWith(base)) throw new Error('非法路径')
+  if (newDir !== oldDir && fs.existsSync(newDir)) throw new Error('已存在同名文件夹')
+  if (newDir !== oldDir) fs.renameSync(oldDir, newDir)
+  return { renamed: path.relative(repoRoot, newDir), name: safe }
+}
+
 // 处理一次上传：转换并落位，返回结果
 function handleUpload(fields, files) {
   const { section, subPath = '', title: titleField = '', groupDesc = '', groupTag = '', groupTagType = 'default', metaTarget = '' } = fields
@@ -371,6 +425,24 @@ const server = http.createServer(async (req, res) => {
       const body = JSON.parse((await readBody(req)).toString('utf-8') || '{}')
       try {
         return sendJson(res, 200, deleteDoc(body.section, body.subPath, body.file))
+      } catch (e) {
+        return sendJson(res, 400, { error: e.message })
+      }
+    }
+    // 重命名文章（改标题+文件名）
+    if (p === '/api/rename-doc' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString('utf-8') || '{}')
+      try {
+        return sendJson(res, 200, renameDoc(body.section, body.subPath, body.file, body.title))
+      } catch (e) {
+        return sendJson(res, 400, { error: e.message })
+      }
+    }
+    // 重命名栏/框文件夹（三大类板块不可改）
+    if (p === '/api/rename-dir' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString('utf-8') || '{}')
+      try {
+        return sendJson(res, 200, renameDir(body.section, body.subPath, body.name))
       } catch (e) {
         return sendJson(res, 400, { error: e.message })
       }
