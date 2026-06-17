@@ -166,6 +166,42 @@ function resolveTarget(section, subPath) {
   return abs
 }
 
+// 列出某板块/栏/框下的文章（.md，不含 index.md）
+function listDocs(section, subPath) {
+  const dir = resolveTarget(section, subPath || '')
+  if (!fs.existsSync(dir)) return []
+  return fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((e) => e.isFile() && e.name.endsWith('.md') && e.name !== 'index.md')
+    .map((e) => ({ name: e.name, title: e.name.replace(/\.md$/, '') }))
+}
+
+// 删除一篇文章；若所在文件夹随之变空（仅剩 _meta.json/无内容），一并清理空框
+function deleteDoc(section, subPath, fileName) {
+  if (!fileName || !fileName.endsWith('.md') || fileName.includes('/') || fileName.includes('..')) {
+    throw new Error('非法文件名')
+  }
+  if (fileName === 'index.md') throw new Error('板块入口页不可删除')
+  if (!subPath || !subPath.trim()) throw new Error('不能删除板块根目录文件')
+  const dir = resolveTarget(section, subPath || '')
+  const target = path.join(dir, fileName)
+  if (!target.startsWith(dir) || !fs.existsSync(target)) throw new Error('文件不存在')
+  fs.unlinkSync(target)
+
+  // 清理空框：若该目录下已无任何 .md（index.md 除外），删掉 _meta.json 和空目录
+  const remaining = fs.readdirSync(dir).filter((n) => n.endsWith('.md') && n !== 'index.md')
+  let removedDir = false
+  if (remaining.length === 0 && dir !== resolveTarget(section, '')) {
+    const leftover = fs.readdirSync(dir)
+    // 只剩 _meta.json 或全空才删，避免误删含子目录的栏
+    if (leftover.every((n) => n === '_meta.json')) {
+      for (const n of leftover) fs.unlinkSync(path.join(dir, n))
+      try { fs.rmdirSync(dir); removedDir = true } catch {}
+    }
+  }
+  return { deleted: path.relative(repoRoot, target), removedDir }
+}
+
 // 处理一次上传：转换并落位，返回结果
 function handleUpload(fields, files) {
   const { section, subPath = '', title: titleField = '', groupDesc = '', groupTag = '', groupTagType = 'default', metaTarget = '' } = fields
@@ -319,6 +355,25 @@ const server = http.createServer(async (req, res) => {
 
     if (p === '/api/build' && req.method === 'POST') {
       return sendJson(res, 200, runBuild())
+    }
+
+    // 列出某板块/栏/框下的文章
+    if (p === '/api/list' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString('utf-8') || '{}')
+      try {
+        return sendJson(res, 200, { docs: listDocs(body.section, body.subPath) })
+      } catch (e) {
+        return sendJson(res, 400, { error: e.message })
+      }
+    }
+    // 删除一篇文章（空框随之清理；三大类板块受 resolveTarget 保护，无法删）
+    if (p === '/api/delete' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)).toString('utf-8') || '{}')
+      try {
+        return sendJson(res, 200, deleteDoc(body.section, body.subPath, body.file))
+      } catch (e) {
+        return sendJson(res, 400, { error: e.message })
+      }
     }
     if (p === '/build-status') {
       return send(res, 200, `<pre style="padding:1.5rem;font-size:.85rem;white-space:pre-wrap">${

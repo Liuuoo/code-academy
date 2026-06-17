@@ -80,6 +80,28 @@
     <button class="btn-ghost" id="rebuild">仅重新发布</button>
   </div>
   <div class="msg" id="msg"></div>
+
+  <hr style="margin:2.5rem 0;border:none;border-top:1px solid var(--vp-c-divider,#e2e2e2)">
+
+  <section id="manage">
+    <h2 style="font-size:1.05rem;margin:0 0 1rem">管理 · 删除文章</h2>
+    <div class="row">
+      <div>
+        <label>板块</label>
+        <select id="mSection"></select>
+      </div>
+      <div>
+        <label>栏</label>
+        <select id="mCol"></select>
+      </div>
+      <div>
+        <label>框</label>
+        <select id="mBox"></select>
+      </div>
+    </div>
+    <ul id="docList" style="list-style:none;padding:0;margin:1rem 0 0"></ul>
+    <div class="msg" id="mMsg"></div>
+  </section>
 </main>
 <script src="/upload.js"></script>
 </body>

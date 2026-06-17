@@ -128,3 +128,68 @@ $('rebuild').addEventListener('click', async () => {
   const j = await r.json()
   showMsg(j.message, j.ok)
 })
+
+// ===== 管理 · 删除文章 =====
+const mSection = $('mSection'), mCol = $('mCol'), mBox = $('mBox')
+const docList = $('docList'), mMsg = $('mMsg')
+
+function initManage() {
+  mSection.innerHTML = Object.entries(tree).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')
+  mRenderCols()
+}
+function mRenderCols() {
+  const sec = tree[mSection.value]
+  mCol.innerHTML = (sec.dirs || []).map(d => `<option value="${d.name}">${d.name}</option>`).join('') || '<option value="">（无栏）</option>'
+  mRenderBoxes()
+}
+function mRenderBoxes() {
+  const sec = tree[mSection.value]
+  const col = (sec.dirs || []).find(d => d.name === mCol.value)
+  const boxes = (col && col.children) || []
+  mBox.innerHTML = boxes.map(b => `<option value="${b.name}">${b.name}</option>`).join('') || '<option value="">（无框）</option>'
+  loadDocs()
+}
+async function loadDocs() {
+  const subPath = [mCol.value, mBox.value].filter(Boolean).join('/')
+  if (!subPath) { docList.innerHTML = '<li style="color:#999">该位置没有可删除的文章</li>'; return }
+  const r = await fetch('/api/list', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ section: mSection.value, subPath })
+  })
+  const j = await r.json()
+  const docs = j.docs || []
+  if (!docs.length) { docList.innerHTML = '<li style="color:#999">该框暂无文章</li>'; return }
+  docList.innerHTML = docs.map(d =>
+    `<li style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .2rem;border-bottom:1px solid var(--vp-c-divider,#eee)">
+      <span>${d.title}</span>
+      <button data-file="${d.name}" class="del-btn" style="border:1px solid #c33;color:#c33;background:transparent;border-radius:4px;padding:.2rem .7rem;cursor:pointer">删除</button>
+    </li>`).join('')
+  docList.querySelectorAll('.del-btn').forEach(btn => btn.addEventListener('click', () => delDoc(btn.dataset.file)))
+}
+async function delDoc(file) {
+  if (!confirm(`确认删除「${file.replace(/\.md$/, '')}」？此操作不可恢复。\n删除后需点"仅重新发布"才会同步到线上。`)) return
+  const subPath = [mCol.value, mBox.value].filter(Boolean).join('/')
+  const r = await fetch('/api/delete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ section: mSection.value, subPath, file })
+  })
+  const j = await r.json()
+  if (r.ok) {
+    mMsg.textContent = '✓ 已删除' + (j.removedDir ? '（空框已一并清理）' : '') + '，记得点"仅重新发布"同步线上'
+    mMsg.className = 'msg ok'
+    // 刷新树和列表
+    const t = await (await fetch('/api/tree')).json(); tree = t
+    if (j.removedDir) mRenderCols(); else loadDocs()
+    renderCols() // 同步刷新上传区下拉
+  } else {
+    mMsg.textContent = '✖ ' + (j.error || '删除失败'); mMsg.className = 'msg err'
+  }
+}
+mSection.addEventListener('change', mRenderCols)
+mCol.addEventListener('change', mRenderBoxes)
+mBox.addEventListener('change', loadDocs)
+
+// tree 加载完成后初始化管理区（tree 在文件顶部 fetch）
+const _initTree = setInterval(() => {
+  if (Object.keys(tree).length) { clearInterval(_initTree); initManage() }
+}, 100)
