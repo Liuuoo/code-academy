@@ -153,17 +153,22 @@ function anchor(col) {
 .sv-card__desc { font-size: 0.78rem; color: var(--vp-c-text-2); margin-top: 0.3rem; }
 .sv-card__list {
   margin-top: 0.7rem; display: flex; flex-direction: column;
-  max-height: 13rem; overflow-y: auto; padding-right: 4px;
+  max-height: 9rem; overflow-y: auto; padding-right: 6px;
   scrollbar-width: thin; scrollbar-color: transparent transparent;
   transition: scrollbar-color 0.3s ease;
 }
-.sv-card__list::-webkit-scrollbar { width: 5px; }
+.sv-card__list::-webkit-scrollbar { width: 4px; }
 .sv-card__list::-webkit-scrollbar-track { background: transparent; }
-.sv-card__list::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; transition: background 0.3s ease; }
-.sv-card:hover .sv-card__list { scrollbar-color: var(--vp-c-divider) transparent; }
-.sv-card:hover .sv-card__list::-webkit-scrollbar-thumb { background: var(--vp-c-divider); }
+.sv-card__list::-webkit-scrollbar-thumb {
+  background: transparent; border-radius: 4px;
+  transition: background 0.3s ease;
+}
+/* hover 卡片时滚动条才浮现：细、半透明、现代 */
+.sv-card:hover .sv-card__list { scrollbar-color: rgba(120,120,120,0.25) transparent; }
+.sv-card:hover .sv-card__list::-webkit-scrollbar-thumb { background: rgba(120,120,120,0.25); }
 .sv-card__list:hover::-webkit-scrollbar-thumb { background: var(--ca-accent); }
 .sv-card__item {
+  flex: 0 0 auto;
   font-size: 0.86rem; padding: 0.3rem 0; text-decoration: none;
   color: var(--vp-c-text-1); white-space: nowrap; overflow: hidden;
   text-overflow: ellipsis; transition: color 0.15s ease;
@@ -184,7 +189,7 @@ function anchor(col) {
   .sv-nav__title { display: none; }
   .sv-nav__item { flex: 0 0 auto; border: 1px solid var(--vp-c-divider); padding: 0.35rem 0.8rem; }
   .sv-cards { grid-template-columns: 1fr; gap: 0.8rem; }
-  .sv-card__list { max-height: none; }
+  .sv-card__list { max-height: 11rem; }
   .sv-card__item { white-space: normal; overflow: visible; text-overflow: clip; padding: 0.45rem 0; }
 }
 </style>
