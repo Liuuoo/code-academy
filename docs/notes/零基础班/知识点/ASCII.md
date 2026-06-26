@@ -1,5 +1,5 @@
 ---
-title: 常用 ASCII 码对照表
+title: ASCII
 ---
 
 # 常用 ASCII 码对照表
