@@ -489,3 +489,48 @@ html.is-doc-page .VPNavBarSearch {
 .vp-doc :not(pre) > code {
   background: var(--ca-glass-bg);
 }
+
+/* ============================================================
+   下载 PDF 按钮 + 打印样式
+   ============================================================ */
+/* 下载按钮：低调放在正文末尾，不抢视线 */
+.ca-download {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--vp-c-divider);
+  text-align: center;
+}
+.ca-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.2rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--vp-c-text-2);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.ca-download-btn:hover { color: var(--ca-accent); border-color: var(--ca-accent); }
+
+/* 打印时隐藏导航、侧栏、水彩背景、折叠按钮、下载按钮自身等 */
+@media print {
+  .VPNav, .VPSidebar, .VPDocAside, .VPLocalNav,
+  .ca-fab, .ca-download, .Layout::before,
+  .VPNavBar, .VPNavScreen, .VPSkipLink,
+  .edit-link, .prev-next, .vp-doc .header-anchor {
+    display: none !important;
+  }
+  html.is-printing .vp-doc, html.is-printing .VPContent {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .vp-doc { font-size: 13pt; line-height: 1.65; }
+  .vp-doc h1 { font-size: 20pt; }
+  .vp-doc h2 { font-size: 16pt; }
+  .vp-doc h3 { font-size: 14pt; }
+  .vp-doc pre { font-size: 9pt; }
+  @page { margin: 2cm; }
+}

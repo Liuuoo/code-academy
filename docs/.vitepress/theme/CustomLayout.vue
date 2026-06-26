@@ -24,6 +24,12 @@ function toggle() {
   try { localStorage.setItem('ca-sidebar-collapsed', collapsed.value ? '1' : '0') } catch {}
   apply()
 }
+function printPDF() {
+  if (typeof document === 'undefined') return
+  document.documentElement.classList.add('is-printing')
+  window.print()
+  setTimeout(() => document.documentElement.classList.remove('is-printing'), 500)
+}
 onMounted(() => {
   try { collapsed.value = localStorage.getItem('ca-sidebar-collapsed') === '1' } catch {}
   apply()
@@ -35,7 +41,6 @@ watch(() => frontmatter.value.layout, apply)
 <template>
   <Layout>
     <template #layout-top>
-      <!-- 独立浮动折叠按钮：仅在带侧栏的文档页显示，fixed 不随侧栏移动 -->
       <button
         v-if="frontmatter.layout !== 'home' && frontmatter.layout !== 'page'"
         class="ca-fab"
@@ -43,6 +48,11 @@ watch(() => frontmatter.value.layout, apply)
         @click="toggle"
         :title="collapsed ? '展开目录' : '折叠目录'"
       >{{ collapsed ? '»' : '«' }}</button>
+    </template>
+    <template #doc-after>
+      <div v-if="frontmatter.layout !== 'home' && frontmatter.layout !== 'page'" class="ca-download">
+        <button class="ca-download-btn" type="button" title="下载为 PDF" @click="printPDF">⬇ 下载 PDF</button>
+      </div>
     </template>
   </Layout>
 </template>
